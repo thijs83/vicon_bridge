@@ -45,7 +45,10 @@ include_directories(
     ${Boost_INCLUDE_DIRS}
     vicon_sdk/DataStream  # For Vicon SDK
     vicon_sdk             # For StreamCommon, required by ViconSDK
+    include
+    ${catkin_INCLUDE_DIRS}
 )
+
 
 # Compile Vicon SDK from scratch to avoid Boost version mismatch clashes
 file(GLOB_RECURSE vicon_sdk_files "${CMAKE_CURRENT_SOURCE_DIR}/vicon_sdk/**/**.cpp")
@@ -79,4 +82,20 @@ install(TARGETS vicon_sdk vicon_bridge calibrate tf_distort testclient
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 install(DIRECTORY launch cfg DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+
+add_executable(${PROJECT_NAME}_remap_node 
+  src/vicon_remap.cpp
+  src/remap_node.cpp
+)
+
+target_link_libraries(${PROJECT_NAME}_remap_node ${catkin_LIBRARIES})
+set_target_properties(${PROJECT_NAME}_remap_node PROPERTIES
+                      OUTPUT_NAME vicon_remap_node PREFIX "")
+
+install(TARGETS 
+  ${PROJECT_NAME}_remap_node
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
