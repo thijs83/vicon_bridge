@@ -6,10 +6,9 @@ using namespace std::chrono;
 
 ViconRemap::ViconRemap(std::shared_ptr<ros::NodeHandle> nh, const int frequency, const std::string topic_name_subscriber, const std::string topic_name_publisher) 
 : _nh(nh), _loop_rate(frequency) {
-    
+
     _pub_remap = _nh->advertise<geometry_msgs::PoseStamped>(topic_name_publisher, 10);
     _sub_pose = _nh->subscribe(topic_name_subscriber, 100, &ViconRemap::callback_pose, this);
-
 }
 
 void ViconRemap::setup()

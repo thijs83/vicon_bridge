@@ -1,0 +1,6 @@
+
+
+remap: 
+       frequency: 1
+       topic_name_subscriber: /vicon/rectangle2x1_1/rectangle2x1_1
+       topic_name_publisher: /obstacles/rectangle2x1_1

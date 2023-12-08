@@ -1,17 +1,33 @@
 <launch>
   <!-- Pass in mocap_config_file:=/path/to/config.yaml to change options. -->
-  <arg name="vicon_config_file" 		default="$(find vicon_bridge)/config/hovergames.yaml" />
+  <arg name="vicon_config_file" 				default="$(find vicon_bridge)/config/hovergames.yaml" />
+  <arg name="vicon_config_file_obstacles" 		default="$(find vicon_bridge)/config/obstacles.yaml" />
 
 
   <!-- remap from vicon topic to specified topic and frequency in the config-->   	
   <node pkg="vicon_bridge"
     	type="vicon_remap_node"
     	name="vicon_remap_node"
+		ns="vicon"
     	respawn="false"
     	launch-prefix=""
     	required="true"
-    	output="screen">
+    	output="screen"
+		args="">
     	<rosparam file="$(arg vicon_config_file)" command="load" />
+  </node>
+
+  <!-- remap from vicon topic to specified topic and frequency in the config-->   	
+  <node pkg="vicon_bridge"
+    	type="vicon_remap_node"
+    	name="vicon_remap_node_obstacles"
+    	respawn="false"
+		ns="vicon_obstacles"
+    	launch-prefix=""
+    	required="true"
+    	output="screen"
+		args="obstacles">
+    	<rosparam file="$(arg vicon_config_file_obstacles)" command="load" />
   </node>
 
   <include file="$(find vicon_bridge)/launch/vicon.launch"/>

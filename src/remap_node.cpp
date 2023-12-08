@@ -6,8 +6,10 @@ int main(int argc, char **argv) {
 
     
     //double frequency = 40;
+    std::string arg;
+    if (argc > 1) {arg = argv[1];};
 
-    ros::init(argc, argv, "vicon_remap");
+    ros::init(argc, argv, "vicon_remap"+arg);
 
     auto nh = std::make_shared<ros::NodeHandle>("~");
 
@@ -37,6 +39,7 @@ int main(int argc, char **argv) {
     } else {
         ROS_ERROR_STREAM("[VICON] No topic name specified in the config");
     }
+
 
     ViconRemap remapper(nh,frequency,topic_name_subscriber, topic_name_publisher);
 
