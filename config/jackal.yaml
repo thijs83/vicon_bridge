@@ -1,0 +1,6 @@
+
+
+remap: 
+       frequency: 20
+       topic_name_subscriber: /vicon/jackal1/jackal1
+       topic_name_publisher: /vicon/jackal

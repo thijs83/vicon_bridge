@@ -5,7 +5,7 @@
   <!-- IP and port on Vicon Windows PC -->
   <arg name="datastream_hostport" default="192.168.0.232"/>
   <!-- Fixed vicon world frame -->
-  <arg name="vicon_world_frame" default="/vicon/world"/>
+  <arg name="vicon_world_frame" default="map"/>
 
 	<node pkg="vicon_bridge" type="vicon_bridge" name="vicon" output="screen" >
 		<param name="stream_mode" value="ServerPush"/>
