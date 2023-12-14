@@ -3,7 +3,7 @@
 #define VICON_BRIDGE_REMAP
 
 #include <geometry_msgs/TransformStamped.h>
-#include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <ros/ros.h>
 #include <chrono>
 #include <time.h>
