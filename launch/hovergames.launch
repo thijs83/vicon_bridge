@@ -22,5 +22,15 @@
   	pkg="topic_tools"
   	args="messages /vicon/rectangle2x1_1/rectangle2x1_1 1 /obstacles/rectangle2x1_1" />
 
+  <node name="pose_throttled_2"
+  	type="throttle"
+  	pkg="topic_tools"
+  	args="messages /vicon/line1/line1 1 /obstacles/line1" />
+
+  <node name="pose_throttled_3"
+  	type="throttle"
+  	pkg="topic_tools"
+  	args="messages /vicon/rectangle2x1_2/rectangle2x1_2 1 /obstacles/rectangle2x1_2" />
+
   <include file="$(find vicon_bridge)/launch/vicon.launch"/>
 </launch>
