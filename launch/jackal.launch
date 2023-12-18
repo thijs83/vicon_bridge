@@ -1,21 +1,27 @@
 <launch>
   <!-- Pass in mocap_config_file:=/path/to/config.yaml to change options. -->
   <arg name="vicon_config_file" 		default="$(find vicon_bridge)/config/jackal.yaml" />
+  <arg name="dynamic_objects"       default="false"/>
 
-
+  <!-- The robot -->
   <!-- remap from vicon topic to specified topic and frequency in the config-->   	
-  <node pkg="vicon_bridge"
-    	type="vicon_remap_node"
-    	name="vicon_remap_node"
-    	respawn="false"
-    	launch-prefix=""
-    	required="true"
-    	output="screen">
+  <node pkg="vicon_bridge" type="vicon_remap_node" name="remap_jackal1" respawn="false" launch-prefix="" required="true" output="screen">
     	<rosparam file="$(arg vicon_config_file)" command="load" />
   </node>
 
+  <!-- Add an EKF to estimate velocity -->
+  <node pkg="robot_localization" type="ekf_localization_node" name="ekf_jackal1" clear_params="true">
+        <rosparam command="load" file="$(find vicon_bridge)/config/ekf.yaml"/>
+        <param name="pose0" value="/vicon/jackal1_mapped"/>
+        <remap from="/odometry/filtered" to="/jackal1/odometry/filtered"/>
+  </node>
+
+  <!-- Dynamic objects (e.g., pedestrians) -->
+  <include file="$(find vicon_bridge)/launch/dynamic_objects.launch" if="$(arg dynamic_objects)"/>
+
   <include file="$(find vicon_bridge)/launch/vicon.launch"/>
-  <node pkg="tf2_ros" type="static_transform_publisher" name="publish_map" args="0 0 0 0 0 0 1 /vicon/world map"/>
+
+  <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="publish_map" args="0 0 0 0 0 0 1 /vicon/world map"/> -->
 
 
 </launch>

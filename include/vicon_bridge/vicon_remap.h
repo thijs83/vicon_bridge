@@ -4,6 +4,7 @@
 
 #include <geometry_msgs/TransformStamped.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/PoseWithCovarianceStamped.h>
 #include <ros/ros.h>
 #include <chrono>
 #include <time.h>
@@ -12,35 +13,40 @@ using namespace std::chrono;
 
 class ViconRemap
 {
-    public:
-        ViconRemap(std::shared_ptr<ros::NodeHandle> nh, const int frequency, const std::string topic_name_subscriber, const std::string topic_name_publisher);
+public:
+    ViconRemap(std::shared_ptr<ros::NodeHandle> nh, const int frequency, const std::string topic_name_subscriber, const std::string topic_name_publisher, bool publish_pose_with_covariance_stamped);
 
-        void setup();
+    void setup();
 
-        void callback_pose(const geometry_msgs::TransformStamped &msg);
+    geometry_msgs::PoseStamped poseToPoseStampedMsg();
+    geometry_msgs::PoseWithCovarianceStamped poseToPoseWithCovarianceStampedMsg();
 
-    private:
-        /// Global node handler
-        std::shared_ptr<ros::NodeHandle> _nh;
+    void callback_pose(const geometry_msgs::TransformStamped &msg);
 
-        // Period between remapping
-        ros::Rate _loop_rate;
+private:
+    /// Global node handler
+    std::shared_ptr<ros::NodeHandle> _nh;
 
-        // Publisher for the mavros topic
-        ros::Publisher _pub_remap;
+    // Period between remapping
+    ros::Rate _loop_rate;
 
-        // Subscriber for the IMU pose and Reset
-        ros::Subscriber _sub_pose;
+    // Publisher for the mavros topic
+    ros::Publisher _pub_remap;
 
-        // Beginning time of period (Timer<milliseconds, steady_clock>)
-        geometry_msgs::TransformStamped _msg;
+    // Subscriber for the IMU pose and Reset
+    ros::Subscriber _sub_pose;
 
-        // Store z offset
-        double _offset_z;
+    // Beginning time of period (Timer<milliseconds, steady_clock>)
+    geometry_msgs::TransformStamped _msg;
 
-        // If first frame is received for storing offset
-        bool _first_frame = true;
+    // Store z offset
+    double _offset_z;
 
+    // Store whether we should publish with or without covariance
+    bool _publish_pose_with_covariance_stamped;
+
+    // If first frame is received for storing offset
+    bool _first_frame = true;
 };
 
 #endif
