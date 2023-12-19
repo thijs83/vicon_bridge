@@ -1,7 +1,7 @@
 
 
 remap: 
-       frequency: 20
+       frequency: 50
        topic_name_subscriber: /vicon/jackal1/jackal1
        topic_name_publisher: /vicon/jackal1_mapped
        publish_pose_with_covariance_stamped: true

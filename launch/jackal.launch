@@ -13,6 +13,7 @@
   <node pkg="robot_localization" type="ekf_localization_node" name="ekf_jackal1" clear_params="true">
         <rosparam command="load" file="$(find vicon_bridge)/config/ekf.yaml"/>
         <param name="pose0" value="/vicon/jackal1_mapped"/>
+        <param name="frequency" value="50"/>
         <remap from="/odometry/filtered" to="/jackal1/odometry/filtered"/>
   </node>
 
@@ -20,8 +21,5 @@
   <include file="$(find vicon_bridge)/launch/dynamic_objects.launch" if="$(arg dynamic_objects)"/>
 
   <include file="$(find vicon_bridge)/launch/vicon.launch"/>
-
-  <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="publish_map" args="0 0 0 0 0 0 1 /vicon/world map"/> -->
-
 
 </launch>

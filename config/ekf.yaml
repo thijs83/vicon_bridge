@@ -1,5 +1,5 @@
-frequency: 20
-sensor_timeout: 0.5
+frequency: 50 #20
+sensor_timeout: 0.05
 # two_d_mode: true
 print_diagnostics: false #echo the /diagnostics_agg topic for details
 
