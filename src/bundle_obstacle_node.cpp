@@ -12,8 +12,8 @@ ros::Publisher bundled_object_pub;
 derived_object_msgs::ObjectArray bundled_objects;
 
 /** @todo via config */
-int dynamic_obstacles_expected = 3;
-int static_obstacles_expected = 1;
+int dynamic_obstacles_expected = 1;
+int static_obstacles_expected = 0;
 int obstacles_expected = dynamic_obstacles_expected + static_obstacles_expected;
 
 // Count obstacles
@@ -79,6 +79,8 @@ void dynamicObstacleOdomCallback(int id, nav_msgs::Odometry::ConstPtr msg)
     object.shape.dimensions[object.shape.CYLINDER_HEIGHT] = 2.2;
 
     increaseObstacleCount(); // We received one more object, publish if all objects were received
+
+    // std::cout << "dynamic obstacle " << id << std::endl;
 }
 
 /** @see dynamicObstacleOdomCallback */
@@ -92,6 +94,7 @@ void staticObstacleOdomCallback(int id, geometry_msgs::PoseWithCovarianceStamped
     object.shape.dimensions[0] = 0.6;
 
     increaseObstacleCount();
+    // std::cout << "static obstacle " << id << std::endl;
 }
 
 int main(int argc, char **argv)
@@ -113,7 +116,7 @@ int main(int argc, char **argv)
     for (int i = 0; i < static_obstacles_expected; i++)
     {
         obstacle_subs.push_back(nh->subscribe<geometry_msgs::PoseWithCovarianceStamped>(
-            "/vicon/static_object" + std::to_string(i + 1) + "_mapped/static_object" + std::to_string(i + 1), 1,
+            "/vicon/static_object" + std::to_string(i + 1) + "_mapped_with_covariance", 1,
             std::bind(staticObstacleOdomCallback, i + dynamic_obstacles_expected, std::placeholders::_1)));
     }
 

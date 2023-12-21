@@ -3,12 +3,15 @@
 
 using namespace std::chrono;
 
-ViconRemap::ViconRemap(std::shared_ptr<ros::NodeHandle> nh, const int frequency, const std::string topic_name_subscriber, const std::string topic_name_publisher, bool publish_pose_with_covariance_stamped)
-    : _nh(nh), _loop_rate(frequency), _publish_pose_with_covariance_stamped(publish_pose_with_covariance_stamped)
+ViconRemap::ViconRemap(std::shared_ptr<ros::NodeHandle> nh, const int frequency,
+                       const std::string topic_name_subscriber, const std::string topic_name_publisher,
+                       bool publish_pose, bool publish_pose_with_covariance_stamped)
+    : _nh(nh), _loop_rate(frequency), _publish_pose_with_covariance_stamped(publish_pose_with_covariance_stamped), _publish_pose(publish_pose)
 {
     if (publish_pose_with_covariance_stamped)
-        _pub_remap = _nh->advertise<geometry_msgs::PoseWithCovarianceStamped>(topic_name_publisher, 10);
-    else
+        _pub_remap_with_covariance = _nh->advertise<geometry_msgs::PoseWithCovarianceStamped>(topic_name_publisher + "_with_covariance", 10);
+
+    if (_publish_pose)
         _pub_remap = _nh->advertise<geometry_msgs::PoseStamped>(topic_name_publisher, 10);
 
     _sub_pose = _nh->subscribe(topic_name_subscriber, 100, &ViconRemap::callback_pose, this);
@@ -22,8 +25,9 @@ void ViconRemap::setup()
     while (ros::ok())
     {
         if (_publish_pose_with_covariance_stamped)
-            _pub_remap.publish(poseToPoseWithCovarianceStampedMsg());
-        else
+            _pub_remap_with_covariance.publish(poseToPoseWithCovarianceStampedMsg());
+
+        if (_publish_pose)
             _pub_remap.publish(poseToPoseStampedMsg());
 
         // msg_remap.header.seq = _msg.header.seq;
@@ -60,12 +64,13 @@ geometry_msgs::PoseWithCovarianceStamped ViconRemap::poseToPoseWithCovarianceSta
     msg_remap.pose.pose.position.z = _msg.transform.translation.z - _offset_z;
 
     // Identity covariance for now
-    msg_remap.pose.covariance[0] = 1.;
-    msg_remap.pose.covariance[7] = 1;
-    msg_remap.pose.covariance[14] = 1;
-    msg_remap.pose.covariance[21] = 1;
-    msg_remap.pose.covariance[28] = 1;
-    msg_remap.pose.covariance[35] = 1;
+    double identity_multiplier = 0.1;
+    msg_remap.pose.covariance[0] = identity_multiplier;
+    msg_remap.pose.covariance[7] = identity_multiplier;
+    msg_remap.pose.covariance[14] = identity_multiplier;
+    msg_remap.pose.covariance[21] = identity_multiplier;
+    msg_remap.pose.covariance[28] = identity_multiplier;
+    msg_remap.pose.covariance[35] = identity_multiplier;
 
     return msg_remap;
 }

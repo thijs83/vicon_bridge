@@ -24,7 +24,7 @@ int main(int argc, char **argv)
 
     std::string topic_name_subscriber;
     std::string topic_name_publisher;
-    bool publish_pose_with_covariance_stamped;
+    bool publish_pose_with_covariance_stamped, publish_pose;
 
     if (nh->hasParam("remap/topic_name_subscriber"))
     {
@@ -55,12 +55,22 @@ int main(int argc, char **argv)
         publish_pose_with_covariance_stamped = false;
     }
 
+    if (nh->hasParam("remap/publish_pose"))
+    {
+        nh->getParam("remap/publish_pose", publish_pose);
+    }
+    else
+    {
+        publish_pose_with_covariance_stamped = false;
+    }
+
     if (publish_pose_with_covariance_stamped)
         ROS_INFO_STREAM("Remapping Vicon topic " << topic_name_subscriber << " to " << topic_name_publisher << " [geometry_msgs/PoseWithCovarianceStamped]");
-    else
+    if (publish_pose)
         ROS_INFO_STREAM("Remapping Vicon topic " << topic_name_subscriber << " to " << topic_name_publisher << " [geometry_msgs/PoseStamped]");
 
-    ViconRemap remapper(nh, frequency, topic_name_subscriber, topic_name_publisher, publish_pose_with_covariance_stamped);
+    ViconRemap remapper(nh, frequency, topic_name_subscriber, topic_name_publisher,
+                        publish_pose, publish_pose_with_covariance_stamped);
 
     remapper.setup();
 

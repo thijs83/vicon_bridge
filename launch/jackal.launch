@@ -12,7 +12,7 @@
   <!-- Add an EKF to estimate velocity -->
   <node pkg="robot_localization" type="ekf_localization_node" name="ekf_jackal1" clear_params="true">
         <rosparam command="load" file="$(find vicon_bridge)/config/ekf.yaml"/>
-        <param name="pose0" value="/vicon/jackal1_mapped"/>
+        <param name="pose0" value="/vicon/jackal1_mapped_with_covariance"/>
         <param name="frequency" value="50"/>
         <remap from="/odometry/filtered" to="/jackal1/odometry/filtered"/>
   </node>

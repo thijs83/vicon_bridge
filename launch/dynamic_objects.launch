@@ -10,17 +10,18 @@
     output="screen" clear_params="true">
         <param name="remap/frequency" value="$(arg frequency)"/>
         <param name="remap/topic_name_subscriber" value="/vicon/$(arg object_type_name)1/$(arg object_type_name)1"/>
-        <param name="remap/topic_name_publisher" value="/vicon/$(arg object_type_name)1_mapped/$(arg object_type_name)1"/>        
+        <param name="remap/topic_name_publisher" value="/vicon/$(arg object_type_name)1_mapped"/>        
+        <param name="remap/publish_pose" value="false"/>
         <param name="remap/publish_pose_with_covariance_stamped" value="true"/>
     </node>
     <!-- Launch an EKF that uses the vicon pose to estimate velocity -->
     <node pkg="robot_localization" type="ekf_localization_node" name="ekf_dynamic_object1" clear_params="true">
         <rosparam command="load" file="$(find vicon_bridge)/config/ekf.yaml"/>
         <!-- Map the input pose -->
-        <param name="pose0" value="/vicon/$(arg object_type_name)1_mapped/$(arg object_type_name)1"/>
+        <param name="pose0" value="/vicon/$(arg object_type_name)1_mapped_with_covariance"/>
         <!-- Do not publish a tf -->
         <param name="publish_tf" value="false"/>
-        <param name="base_link_frame" value="none"/>
+        <param name="base_link_frame" value="/vicon/$(arg object_type_name)1/$(arg object_type_name)1"/>
         <!-- Instead publish the odometry -->
         <remap from="/odometry/filtered" to="/$(arg object_type_name)1/odometry/filtered"/>
     </node>
@@ -30,14 +31,15 @@
     output="screen" clear_params="true">
         <param name="remap/frequency" value="$(arg frequency)"/>
         <param name="remap/topic_name_subscriber" value="/vicon/$(arg object_type_name)2/$(arg object_type_name)2"/>
-        <param name="remap/topic_name_publisher" value="/vicon/$(arg object_type_name)2_mapped/$(arg object_type_name)2"/>        
+        <param name="remap/topic_name_publisher" value="/vicon/$(arg object_type_name)2_mapped"/>        
+        <param name="remap/publish_pose" value="false"/>
         <param name="remap/publish_pose_with_covariance_stamped" value="true"/>
     </node>
     <node pkg="robot_localization" type="ekf_localization_node" name="ekf_dynamic_object2" clear_params="true">
         <rosparam command="load" file="$(find vicon_bridge)/config/ekf.yaml"/>
-        <param name="pose0" value="/vicon/$(arg object_type_name)2_mapped/$(arg object_type_name)2"/>
+        <param name="pose0" value="/vicon/$(arg object_type_name)2_mapped_with_covariance"/>
         <param name="publish_tf" value="false"/>
-        <param name="base_link_frame" value="none"/>
+        <param name="base_link_frame" value="/vicon/$(arg object_type_name)2/$(arg object_type_name)2"/>
         <remap from="/odometry/filtered" to="/$(arg object_type_name)2/odometry/filtered"/>
     </node>
 
@@ -46,14 +48,15 @@
     output="screen" clear_params="true">
         <param name="remap/frequency" value="$(arg frequency)"/>
         <param name="remap/topic_name_subscriber" value="/vicon/$(arg object_type_name)3/$(arg object_type_name)3"/>
-        <param name="remap/topic_name_publisher" value="/vicon/$(arg object_type_name)3_mapped/$(arg object_type_name)3"/>        
+        <param name="remap/topic_name_publisher" value="/vicon/$(arg object_type_name)3_mapped"/>        
+        <param name="remap/publish_pose" value="false"/>
         <param name="remap/publish_pose_with_covariance_stamped" value="true"/>
     </node>
     <node pkg="robot_localization" type="ekf_localization_node" name="ekf_dynamic_object3" clear_params="true">
         <rosparam command="load" file="$(find vicon_bridge)/config/ekf.yaml"/>
-        <param name="pose0" value="/vicon/$(arg object_type_name)3_mapped/$(arg object_type_name)3"/>
+        <param name="pose0" value="/vicon/$(arg object_type_name)3_mapped_with_covariance"/>
         <param name="publish_tf" value="false"/>
-        <param name="base_link_frame" value="none"/>
+        <param name="base_link_frame" value="/vicon/$(arg object_type_name)3/$(arg object_type_name)3"/>
         <remap from="/odometry/filtered" to="/$(arg object_type_name)3/odometry/filtered"/>
     </node>
 
@@ -62,10 +65,10 @@
     output="screen" clear_params="true">
         <param name="remap/frequency" value="$(arg frequency)"/>
         <param name="remap/topic_name_subscriber" value="/vicon/rectangle2x1_2/rectangle2x1_2"/>
-        <param name="remap/topic_name_publisher" value="/vicon/static_object1_mapped/static_object1"/>        
+        <param name="remap/topic_name_publisher" value="/vicon/static_object1_mapped"/>        
+        <param name="remap/publish_pose" value="false"/>
         <param name="remap/publish_pose_with_covariance_stamped" value="true"/>
     </node>
 
     <node pkg="vicon_bridge" type="vicon_bundle_obstacle_node" name="vicon_bundle_obstacle_node"/>
-
 </launch>

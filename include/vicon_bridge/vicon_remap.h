@@ -14,7 +14,9 @@ using namespace std::chrono;
 class ViconRemap
 {
 public:
-    ViconRemap(std::shared_ptr<ros::NodeHandle> nh, const int frequency, const std::string topic_name_subscriber, const std::string topic_name_publisher, bool publish_pose_with_covariance_stamped);
+    ViconRemap(std::shared_ptr<ros::NodeHandle> nh, const int frequency,
+               const std::string topic_name_subscriber, const std::string topic_name_publisher,
+               bool publish_pose, bool publish_pose_with_covariance_stamped);
 
     void setup();
 
@@ -31,7 +33,7 @@ private:
     ros::Rate _loop_rate;
 
     // Publisher for the mavros topic
-    ros::Publisher _pub_remap;
+    ros::Publisher _pub_remap, _pub_remap_with_covariance;
 
     // Subscriber for the IMU pose and Reset
     ros::Subscriber _sub_pose;
@@ -43,7 +45,7 @@ private:
     double _offset_z;
 
     // Store whether we should publish with or without covariance
-    bool _publish_pose_with_covariance_stamped;
+    bool _publish_pose, _publish_pose_with_covariance_stamped;
 
     // If first frame is received for storing offset
     bool _first_frame = true;
