@@ -1,6 +1,0 @@
-
-
-remap: 
-       frequency: 40
-       topic_name_subscriber: /vicon/drone1/drone1
-       topic_name_publisher: /mavros/vision_pose/pose
