@@ -6,8 +6,7 @@
 
     <!-- For each dynamic object -->
     <!-- remap from vicon topic to specified topic and frequency-->   	
-    <node pkg="vicon_bridge" type="vicon_remap_node" name="remap_dynamic_object1" launch-prefix="" required="true" 
-    output="screen" clear_params="true">
+    <node pkg="vicon_bridge" type="vicon_remap_node" name="remap_dynamic_object1" required="true" output="screen" clear_params="true">
         <param name="remap/frequency" value="$(arg frequency)"/>
         <param name="remap/topic_name_subscriber" value="/vicon/$(arg object_type_name)1/$(arg object_type_name)1"/>
         <param name="remap/topic_name_publisher" value="/vicon/$(arg object_type_name)1_mapped"/>        
@@ -26,7 +25,6 @@
         <remap from="/odometry/filtered" to="/$(arg object_type_name)1/odometry/filtered"/>
     </node>
 
-    <!-- OBJECT 2-->   	
     <node pkg="vicon_bridge" type="vicon_remap_node" name="remap_dynamic_object2" launch-prefix="" required="true" 
     output="screen" clear_params="true">
         <param name="remap/frequency" value="$(arg frequency)"/>
@@ -43,7 +41,6 @@
         <remap from="/odometry/filtered" to="/$(arg object_type_name)2/odometry/filtered"/>
     </node>
 
-    <!-- OBJECT 3-->   	
     <node pkg="vicon_bridge" type="vicon_remap_node" name="remap_dynamic_object3" launch-prefix="" required="true" 
     output="screen" clear_params="true">
         <param name="remap/frequency" value="$(arg frequency)"/>
@@ -60,15 +57,47 @@
         <remap from="/odometry/filtered" to="/$(arg object_type_name)3/odometry/filtered"/>
     </node>
 
+    <node pkg="vicon_bridge" type="vicon_remap_node" name="remap_dynamic_object4" launch-prefix="" required="true" 
+    output="screen" clear_params="true">
+        <param name="remap/frequency" value="$(arg frequency)"/>
+        <param name="remap/topic_name_subscriber" value="/vicon/$(arg object_type_name)4/$(arg object_type_name)4"/>
+        <param name="remap/topic_name_publisher" value="/vicon/$(arg object_type_name)4_mapped"/>        
+        <param name="remap/publish_pose" value="false"/>
+        <param name="remap/publish_pose_with_covariance_stamped" value="true"/>
+    </node>
+    <node pkg="robot_localization" type="ekf_localization_node" name="ekf_dynamic_object4" clear_params="true">
+        <rosparam command="load" file="$(find vicon_bridge)/config/ekf.yaml"/>
+        <param name="pose0" value="/vicon/$(arg object_type_name)4_mapped_with_covariance"/>
+        <param name="publish_tf" value="false"/>
+        <param name="base_link_frame" value="/vicon/$(arg object_type_name)4/$(arg object_type_name)4"/>
+        <remap from="/odometry/filtered" to="/$(arg object_type_name)4/odometry/filtered"/>
+    </node>
+
+        <node pkg="vicon_bridge" type="vicon_remap_node" name="remap_dynamic_object5" launch-prefix="" required="true" 
+    output="screen" clear_params="true">
+        <param name="remap/frequency" value="$(arg frequency)"/>
+        <param name="remap/topic_name_subscriber" value="/vicon/$(arg object_type_name)5/$(arg object_type_name)5"/>
+        <param name="remap/topic_name_publisher" value="/vicon/$(arg object_type_name)5_mapped"/>        
+        <param name="remap/publish_pose" value="false"/>
+        <param name="remap/publish_pose_with_covariance_stamped" value="true"/>
+    </node>
+    <node pkg="robot_localization" type="ekf_localization_node" name="ekf_dynamic_object5" clear_params="true">
+        <rosparam command="load" file="$(find vicon_bridge)/config/ekf.yaml"/>
+        <param name="pose0" value="/vicon/$(arg object_type_name)5_mapped_with_covariance"/>
+        <param name="publish_tf" value="false"/>
+        <param name="base_link_frame" value="/vicon/$(arg object_type_name)5/$(arg object_type_name)5"/>
+        <remap from="/odometry/filtered" to="/$(arg object_type_name)5/odometry/filtered"/>
+    </node>
+
     <!-- STATIC OBJECT 1 -->
-    <node pkg="vicon_bridge" type="vicon_remap_node" name="remap_static_object1" launch-prefix="" required="true" 
+    <!-- <node pkg="vicon_bridge" type="vicon_remap_node" name="remap_static_object1" launch-prefix="" required="true" 
     output="screen" clear_params="true">
         <param name="remap/frequency" value="$(arg frequency)"/>
         <param name="remap/topic_name_subscriber" value="/vicon/rectangle2x1_2/rectangle2x1_2"/>
         <param name="remap/topic_name_publisher" value="/vicon/static_object1_mapped"/>        
         <param name="remap/publish_pose" value="false"/>
         <param name="remap/publish_pose_with_covariance_stamped" value="true"/>
-    </node>
+    </node> -->
 
-    <node pkg="vicon_bridge" type="vicon_bundle_obstacle_node" name="vicon_bundle_obstacle_node"/>
+    <!-- <node pkg="vicon_bridge" type="vicon_bundle_obstacle_node" name="vicon_bundle_obstacle_node"/> -->
 </launch>

@@ -1,24 +1,26 @@
 <launch>
   <!-- Pass in mocap_config_file:=/path/to/config.yaml to change options. -->
   <arg name="vicon_config_file" 		default="$(find vicon_bridge)/config/jackal.yaml" />
-  <arg name="dynamic_objects"       default="false"/>
+  <arg name="dynamic_objects"       default="true"/>
+  <arg name="static_objects"       default="true"/>
 
   <!-- The robot -->
   <!-- remap from vicon topic to specified topic and frequency in the config-->   	
-  <node pkg="vicon_bridge" type="vicon_remap_node" name="remap_jackal1" respawn="false" launch-prefix="" required="true" output="screen">
+  <node pkg="vicon_bridge" type="vicon_remap_node" name="remap_jackal3" respawn="false" launch-prefix="" required="true" output="log">
     	<rosparam file="$(arg vicon_config_file)" command="load" />
   </node>
 
   <!-- Add an EKF to estimate velocity -->
-  <node pkg="robot_localization" type="ekf_localization_node" name="ekf_jackal1" clear_params="true">
+  <node pkg="robot_localization" type="ekf_localization_node" name="ekf_jackal3" clear_params="true">
         <rosparam command="load" file="$(find vicon_bridge)/config/ekf.yaml"/>
-        <param name="pose0" value="/vicon/jackal1_mapped_with_covariance"/>
+        <param name="pose0" value="/vicon/jackal3_mapped_with_covariance"/>
         <param name="frequency" value="50"/>
-        <remap from="/odometry/filtered" to="/jackal1/odometry/filtered"/>
+        <remap from="/odometry/filtered" to="/jackal3/odometry/filtered"/>
   </node>
 
   <!-- Dynamic objects (e.g., pedestrians) -->
   <include file="$(find vicon_bridge)/launch/dynamic_objects.launch" if="$(arg dynamic_objects)"/>
+  <include file="$(find vicon_bridge)/launch/static_objects.launch" if="$(arg static_objects)"/>
 
   <include file="$(find vicon_bridge)/launch/vicon.launch"/>
 
