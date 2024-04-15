@@ -3,32 +3,42 @@
 
 #include <string>
 
-#include <ros/publisher.h>
-#include <ros/node_handle.h>
-
+#include <vicon_bridge/node_handler_ros.h>
 #include <vicon_bridge/ros_definitions.h>
 
 class SegmentPublisher
 {
 public:
 
-  ros::Publisher pub_;
   std::string frame_id_ = "world";
 
   // Variables for publishing at a lower rate
   int counter = 0;
-  int publish_on_count = 0;
+  const int publish_on_count = 0;
 
   // If we want to reset the z-axis
   double z_axis_offset_ = 0.0;
 
 
-  SegmentPublisher(ros::Publisher pub, std::string frame_id, int frequency_divider, double z_axis_offset):
-    pub_(pub),
+  SegmentPublisher(const std::string frame_id, const std::string publish_topic, const int frequency_divider, const double z_axis_offset):
     frame_id_(frame_id),
     publish_on_count(frequency_divider),
     z_axis_offset_(z_axis_offset)
   {};
+
+  ~SegmentPublisher(){};
+
+  bool discardDueToLowerRate()
+  {
+    counter++;
+
+    if (counter < publish_on_count)
+    {
+      return true;
+    }
+    counter = 0;
+    return false;
+  }
 
   //virtual void setMsg(ros::NodeHandle nh, std::string publish_topic)=0;
 

@@ -3,29 +3,35 @@
 
 #include <vicon_bridge/segment_publisher.h>
 
-#include <geometry_msgs/TransformStamped.h>
-#include <ros/node_handle.h>
+#ifdef ROS_VERSION1
+  #include <geometry_msgs/TransformStamped.h>
+  typedef geometry_msgs::TransformStamped GEOMETRY_MSG_TRANSFORMSTAMPED;
+#endif
+#ifdef ROS_VERSION2
+  #include <geometry_msgs/msg/transform_stamped.hpp>
+  typedef geometry_msgs::msg::TransformStamped GEOMETRY_MSG_TRANSFORMSTAMPED;
+#endif
+
 
 
 class SegmentPublisherTransformStamped: public SegmentPublisher
 {
+private:
+  // Convention class to both allow for ROS1 and ROS2
+  RosPublisher<GEOMETRY_MSG_TRANSFORMSTAMPED> pub_;
+
 public:
 
-  SegmentPublisherTransformStamped(ros::NodeHandle nh, std::string frame_id, std::string publish_topic, int frequency_divider, double z_axis_offset):
-    SegmentPublisher(nh.advertise<geometry_msgs::TransformStamped>(publish_topic, 1), frame_id, frequency_divider, z_axis_offset)
-  {};
+  SegmentPublisherTransformStamped(NodeHandler& node_handler, std::string frame_id, std::string publish_topic, int frequency_divider, double z_axis_offset):
+    SegmentPublisher(frame_id, publish_topic, frequency_divider, z_axis_offset),
+    pub_(node_handler.createPublisher<GEOMETRY_MSG_TRANSFORMSTAMPED>(publish_topic, 1))
+  {}
 
   void publishMsg(const ROS_TIME frame_time, const double position[3], const double rotation[4]) override
   {
-    counter++;
+     if (this->discardDueToLowerRate()){return;};
 
-    if (counter < publish_on_count)
-    {
-      return;
-    }
-    counter = 0;
-
-    geometry_msgs::TransformStamped transform_stamped;
+    GEOMETRY_MSG_TRANSFORMSTAMPED transform_stamped;
 
     transform_stamped.header.stamp = frame_time;
     transform_stamped.header.frame_id = frame_id_;
@@ -37,7 +43,7 @@ public:
     transform_stamped.transform.rotation.z = rotation[2];
     transform_stamped.transform.rotation.w = rotation[3];
 
-    pub_.publish(transform_stamped);
+    this->pub_.publishNow(transform_stamped);
   }
 
 };

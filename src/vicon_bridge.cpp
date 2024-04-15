@@ -67,8 +67,8 @@ ViconReceiver::ViconReceiver() :
   bool setup_grabpose = false;
 
 
-  getparam("stream_mode", stream_mode, stream_mode);
-  getparam("datastream_hostport", host_name, host_name);
+  getParameter("stream_mode", stream_mode);
+  getParameter("datastream_hostport", host_name);
 
   if (init_vicon(host_name, stream_mode) == false)
   {
@@ -76,16 +76,16 @@ ViconReceiver::ViconReceiver() :
     return;
   }
 
-  getparam("publish_transform", publish_tf_);
-  getparam("publish_markers", publish_markers_);
-  getparam("publish_segments", publish_segments_);
-  getparam("setup_grabpose", setup_grabpose);
+  getParameter("publish_transform", publish_tf_);
+  getParameter("publish_markers", publish_markers_);
+  getParameter("publish_segments", publish_segments_);
+  getParameter("setup_grabpose", setup_grabpose);
 
   // Parameters for the tracked objects
-  getparam("msg_type", msg_type_all_);
-  getparam("frame_id", frame_id_all_);
-  getparam("frequency_divider", frequency_divider_all_);
-  getparam("reset_z_axis", reset_z_axis_);
+  getParameter("msg_type", msg_type_all_);
+  getParameter("frame_id", frame_id_all_);
+  getParameter("frequency_divider", frequency_divider_all_);
+  getParameter("reset_z_axis", reset_z_axis_);
 
   vicon_client_.GetFrame();
   double client_framerate = vicon_client_.GetFrameRate().FrameRateHz;
@@ -100,19 +100,19 @@ ViconReceiver::ViconReceiver() :
   }
 
   // Parameters for tracking specific objects
-  getparam("only_use_object_specific", object_specific_only_, object_specific_only_);
+  getParameter("only_use_object_specific", object_specific_only_);
 
   std::vector<std::string> object_names;
   std::vector<std::string> object_msg_types;
   std::vector<std::string> object_frame_ids;
   std::vector<std::string> object_publish_topics;
   std::vector<int> object_frequency_divider;
-  getparam("object_specific/object_names", object_names);
-  getparam("object_specific/object_msg_types", object_msg_types);
-  getparam("object_specific/object_frame_ids", object_frame_ids);
-  getparam("object_specific/object_publish_topics", object_publish_topics);
-  getparam("object_specific/object_publish_topics", object_publish_topics);
-  getparam("object_specific/object_frequency_divider", object_frequency_divider);
+  getParameter("object_specific/object_names", object_names);
+  getParameter("object_specific/object_msg_types", object_msg_types);
+  getParameter("object_specific/object_frame_ids", object_frame_ids);
+  getParameter("object_specific/object_publish_topics", object_publish_topics);
+  getParameter("object_specific/object_publish_topics", object_publish_topics);
+  getParameter("object_specific/object_frequency_divider", object_frequency_divider);
 
 
   // Check if the sizes of the vectors are equal
@@ -153,7 +153,7 @@ ViconReceiver::ViconReceiver() :
   // Publishers
   if(publish_markers_)
   {
-    create_marker_publisher(tracked_frame_suffix_ + "/markers", 10);
+    createMarkerPublisher(tracked_frame_suffix_ + "/markers", 10);
   }
   
   ROS_RATE loop_rate(1);
@@ -348,13 +348,13 @@ void ViconReceiver::process_subjects(const ROS_TIME& frame_time)
 
           if (msg_type_all_ == "geometry_msgs/PoseStamped")
           {
-            segment_publishers_.insert(std::make_pair(name, new SegmentPublisherPoseStamped(nh_, frame_id_all_, name, frequency_divider_all_, z_axis_offset)));
+            segment_publishers_.insert(std::make_pair(name, new SegmentPublisherPoseStamped(*this, frame_id_all_, name, frequency_divider_all_, z_axis_offset)));
           } else if (msg_type_all_ == "geometry_msgs/PoseWithCovarianceStamped")
           {
-            segment_publishers_.insert(std::make_pair(name, new SegmentPublisherPosewithcovarianceStamped(nh_, frame_id_all_, name, frequency_divider_all_, z_axis_offset)));
+            segment_publishers_.insert(std::make_pair(name, new SegmentPublisherPosewithcovarianceStamped(*this, frame_id_all_, name, frequency_divider_all_, z_axis_offset)));
           } else if (msg_type_all_ == "geometry_msgs/TransformStamped")
           {
-            segment_publishers_.insert(std::make_pair(name, new SegmentPublisherTransformStamped(nh_, frame_id_all_, name, frequency_divider_all_, z_axis_offset)));
+            segment_publishers_.insert(std::make_pair(name, new SegmentPublisherTransformStamped(*this, frame_id_all_, name, frequency_divider_all_, z_axis_offset)));
           }
 
         } else if (!(object_specific_details_it == object_specific_details_.end()))
@@ -380,13 +380,13 @@ void ViconReceiver::process_subjects(const ROS_TIME& frame_time)
           // Use specific option
           if (msg_type == "geometry_msgs/PoseStamped")
           {
-            segment_publishers_.insert(std::make_pair(name, new SegmentPublisherPoseStamped(nh, frame_id, publish_topic, frequency_divider, z_axis_offset)));
+            segment_publishers_.insert(std::make_pair(name, new SegmentPublisherPoseStamped(*this, frame_id, publish_topic, frequency_divider, z_axis_offset)));
           } else if (msg_type == "geometry_msgs/PoseWithCovarianceStamped")
           {
-            segment_publishers_.insert(std::make_pair(name, new SegmentPublisherPosewithcovarianceStamped(nh, frame_id, publish_topic, frequency_divider, z_axis_offset)));
+            segment_publishers_.insert(std::make_pair(name, new SegmentPublisherPosewithcovarianceStamped(*this, frame_id, publish_topic, frequency_divider, z_axis_offset)));
           } else if (msg_type == "geometry_msgs/TransformStamped")
           {
-            segment_publishers_.insert(std::make_pair(name, new SegmentPublisherTransformStamped(nh, frame_id, publish_topic, frequency_divider, z_axis_offset)));
+            segment_publishers_.insert(std::make_pair(name, new SegmentPublisherTransformStamped(*this, frame_id, publish_topic, frequency_divider, z_axis_offset)));
           }
 
           object_specific_details_.erase(object_specific_details_it);
@@ -539,3 +539,8 @@ int main(int argc, char** argv)
   aspin.stop();
   return 0;
 }
+
+    // rclcpp::init(argc, argv);
+    // auto node = std::make_shared<rclcpp::Node>("my_node_name");
+    // rclcpp::spin(node);
+    // rclcpp::shutdown();

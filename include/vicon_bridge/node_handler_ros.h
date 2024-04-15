@@ -6,7 +6,8 @@
 #ifdef ROS_VERSION1
 
 #include <ros/ros.h>
-
+#include <vicon_bridge/Markers.h>
+#include <vicon_bridge/Marker.h>
 
 class NodeHandler
 {
@@ -24,9 +25,15 @@ public:
         nh_.param(parameter_name, param, param);
     }
 
+    template <typename MSG>
+    ros::Publisher createPublisher(std::string topic, int queue_size)
+    {
+        return nh_.advertise<MSG>(topic, queue_size);
+    }
+
     void createMarkerPublisher(std::string topic, int queue_size)
     {
-        pub_marker_ = nh_.advertise<visualization_msgs::Marker>(topic, queue_size);
+        pub_marker_ = nh_.advertise<vicon_bridge::Markers>(topic, queue_size);
     }
 
 
@@ -60,21 +67,23 @@ public:
         parameter = this->get_parameter("~/"+parameter_name, parameter);
         param = std::static_cast<T>(parameter.get_value());
     }
+
+    template <typename MSG>
+    rclcpp::Publisher<MSG>::SharedPtr createPublisher(std::string topic, int queue_size)
+    {
+        return this->create_publisher<MSG>(publish_topic, 10);
+    }
+
+    void createMarkerPublisher(std::string topic, int queue_size)
+    {
+        pub_marker_ = nh_.advertise<vicon_bridge::msg::Markers>(topic, queue_size);
+    }
+
+protected:
+    rclcpp::Publisher<vicon_bridge::msg::Markers>::SharedPtr pub_marker_;
+
 };
 
+#endif // ROS_VERSION2
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#endif
+#endif // VICON_BRIDGE_NODE_HANDLER_ROS_H

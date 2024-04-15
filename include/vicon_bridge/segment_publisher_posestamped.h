@@ -3,28 +3,35 @@
 
 #include <vicon_bridge/segment_publisher.h>
 
-#include <geometry_msgs/PoseStamped.h>
-#include <ros/node_handle.h>
+#ifdef ROS_VERSION1
+  #include <geometry_msgs/PoseStamped.h>
+  typedef geometry_msgs::PoseStamped GEOMETRY_MSG_POSESTAMPED;
+#endif
+#ifdef ROS_VERSION2
+  #include <geometry_msgs/msg/PoseStamped.hpp>
+  typedef geometry_msgs::msg::PoseStamped GEOMETRY_MSG_POSESTAMPED;
+#endif
+
 
 class SegmentPublisherPoseStamped: public SegmentPublisher
 {
+private:
+  // Convention class to both allow for ROS1 and ROS2
+  RosPublisher<GEOMETRY_MSG_POSESTAMPED> pub_;
+
 public:
 
-  SegmentPublisherPoseStamped(ros::NodeHandle nh, std::string frame_id, std::string publish_topic, int frequency_divider, double z_axis_offset):
-    SegmentPublisher(nh.advertise<geometry_msgs::PoseStamped>(publish_topic, 1), frame_id, frequency_divider, z_axis_offset)
+  SegmentPublisherPoseStamped(NodeHandler& node_handler, std::string frame_id, std::string publish_topic, int frequency_divider, double z_axis_offset):
+    SegmentPublisher(frame_id, publish_topic, frequency_divider, z_axis_offset),
+    pub_(node_handler.createPublisher<GEOMETRY_MSG_POSESTAMPED>(publish_topic, 1))
   {};
 
   void publishMsg(const ROS_TIME frame_time, const double position[3], const double rotation[4]) override
   {
-    counter++;
+    if (this->discardDueToLowerRate()){return;};
+    
 
-    if (counter < publish_on_count)
-    {
-      return;
-    }
-    counter = 0;
-
-    geometry_msgs::PoseStamped pose_stamped;
+    GEOMETRY_MSG_POSESTAMPED pose_stamped;
 
     pose_stamped.header.stamp = frame_time;
     pose_stamped.header.frame_id = frame_id_;
@@ -36,7 +43,7 @@ public:
     pose_stamped.pose.orientation.z = rotation[2];
     pose_stamped.pose.orientation.w = rotation[3];
 
-    pub_.publish(pose_stamped);
+    this->pub_.publishNow(pose_stamped);
   }
 
 };
