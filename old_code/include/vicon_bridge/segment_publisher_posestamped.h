@@ -14,7 +14,7 @@ public:
     SegmentPublisher(nh.advertise<geometry_msgs::PoseStamped>(publish_topic, 1), frame_id, frequency_divider, z_axis_offset)
   {};
 
-  void publishMsg(const ROS_TIME frame_time, const double position[3], const double rotation[4]) override
+  void publishMsg(const ros::Time frame_time, const double position[3], const double rotation[4]) override
   {
     counter++;
 

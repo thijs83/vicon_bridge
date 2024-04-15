@@ -55,11 +55,10 @@
 
 #include <vicon_bridge/printer.h>
 
-#include <vicon_bridge/ros_definitions.h>
 
 
 ViconReceiver::ViconReceiver() :
-    NodeHandler("vicon")
+    nh_priv("~")
 {
   // Setting up the vicon client connection
   std::string host_name = "";
@@ -67,8 +66,8 @@ ViconReceiver::ViconReceiver() :
   bool setup_grabpose = false;
 
 
-  getparam("stream_mode", stream_mode, stream_mode);
-  getparam("datastream_hostport", host_name, host_name);
+  nh_priv.param("stream_mode", stream_mode, stream_mode);
+  nh_priv.param("datastream_hostport", host_name, host_name);
 
   if (init_vicon(host_name, stream_mode) == false)
   {
@@ -76,16 +75,16 @@ ViconReceiver::ViconReceiver() :
     return;
   }
 
-  getparam("publish_transform", publish_tf_);
-  getparam("publish_markers", publish_markers_);
-  getparam("publish_segments", publish_segments_);
-  getparam("setup_grabpose", setup_grabpose);
+  nh_priv.param("publish_transform", publish_tf_, publish_tf_);
+  nh_priv.param("publish_markers", publish_markers_, publish_markers_);
+  nh_priv.param("publish_segments", publish_segments_, publish_segments_);
+  nh_priv.param("setup_grabpose", setup_grabpose, setup_grabpose);
 
   // Parameters for the tracked objects
-  getparam("msg_type", msg_type_all_);
-  getparam("frame_id", frame_id_all_);
-  getparam("frequency_divider", frequency_divider_all_);
-  getparam("reset_z_axis", reset_z_axis_);
+  nh_priv.param("msg_type", msg_type_all_, msg_type_all_);
+  nh_priv.param("frame_id", frame_id_all_, frame_id_all_);
+  nh_priv.param("frequency_divider", frequency_divider_all_, frequency_divider_all_);
+  nh_priv.param("reset_z_axis", reset_z_axis_, reset_z_axis_);
 
   vicon_client_.GetFrame();
   double client_framerate = vicon_client_.GetFrameRate().FrameRateHz;
@@ -100,19 +99,19 @@ ViconReceiver::ViconReceiver() :
   }
 
   // Parameters for tracking specific objects
-  getparam("only_use_object_specific", object_specific_only_, object_specific_only_);
+  nh_priv.param("only_use_object_specific", object_specific_only_, object_specific_only_);
 
   std::vector<std::string> object_names;
   std::vector<std::string> object_msg_types;
   std::vector<std::string> object_frame_ids;
   std::vector<std::string> object_publish_topics;
   std::vector<int> object_frequency_divider;
-  getparam("object_specific/object_names", object_names);
-  getparam("object_specific/object_msg_types", object_msg_types);
-  getparam("object_specific/object_frame_ids", object_frame_ids);
-  getparam("object_specific/object_publish_topics", object_publish_topics);
-  getparam("object_specific/object_publish_topics", object_publish_topics);
-  getparam("object_specific/object_frequency_divider", object_frequency_divider);
+  nh_priv.param("object_specific/object_names", object_names, object_names);
+  nh_priv.param("object_specific/object_msg_types", object_msg_types, object_msg_types);
+  nh_priv.param("object_specific/object_frame_ids", object_frame_ids, object_frame_ids);
+  nh_priv.param("object_specific/object_publish_topics", object_publish_topics, object_publish_topics);
+  nh_priv.param("object_specific/object_publish_topics", object_publish_topics, object_publish_topics);
+  nh_priv.param("object_specific/object_frequency_divider", object_frequency_divider, object_frequency_divider);
 
 
   // Check if the sizes of the vectors are equal
@@ -150,16 +149,30 @@ ViconReceiver::ViconReceiver() :
     }
   }
 
+  
+
+  
+  // Service Server
+  if (setup_grabpose)
+  {
+    VICON_INFO("setting up grab_vicon_pose service server ... ");
+    m_grab_vicon_pose_service_server = nh_priv.advertiseService("grab_vicon_pose", &ViconReceiver::grabPoseCallback,
+                                                                this);
+  }
+
+  // VICON_INFO("setting up segment calibration service server ... ");
+  // calibrate_segment_server_ = nh_priv.advertiseService("calibrate_segment", &ViconReceiver::calibrateSegmentCallback,
+  //                                                       this);
+
   // Publishers
   if(publish_markers_)
   {
-    create_marker_publisher(tracked_frame_suffix_ + "/markers", 10);
+    marker_pub_ = nh.advertise<vicon_bridge::Markers>(tracked_frame_suffix_ + "/markers", 10);
   }
   
-  ROS_RATE loop_rate(1);
+  ros::Duration d(1);
 
-  bool ros_ok = ROS_OK();
-  while (ros_ok)
+  while (ros::ok())
   {
     // Ask for a new frame or wait untill a new frame is available (BLOCKING)
     if (vicon_client_.GetFrame().Result == Result::Success)
@@ -175,12 +188,10 @@ ViconReceiver::ViconReceiver() :
       {
         vicon_client_.Connect(host_name);
         VICON_INFO(".");
-        loop_rate.sleep();
+        d.sleep();
       }
       VICON_INFO_STREAM("... connection re-established!");
-    }
-
-    ros_ok = ROS_OK();   
+    }   
   }
 }
 
@@ -199,7 +210,7 @@ ViconReceiver::~ViconReceiver()
   {
     VICON_ERROR("Error while shutting down Vicon.");
   }
-  VICON_ASSERT(!vicon_client_.IsConnected().Connected, "Vicon connection still active! Hard shutdown.");
+  VICON_ASSERT(!vicon_client_.IsConnected().Connected);
 }
 
 
@@ -207,7 +218,7 @@ bool ViconReceiver::init_vicon(std::string host_name, std::string stream_mode)
 {
   VICON_INFO_STREAM("Connecting to Vicon DataStream SDK at " << host_name << " ...");
 
-  ROS_RATE d(1);
+  ros::Duration d(1);
   Result::Enum result(Result::Unknown);
 
   while (!vicon_client_.IsConnected().Connected)
@@ -215,11 +226,11 @@ bool ViconReceiver::init_vicon(std::string host_name, std::string stream_mode)
     vicon_client_.Connect(host_name);
     VICON_INFO(".");
     d.sleep();
-    bool ros_ok = ROS_OK();
-    if (!ros_ok)
+    ros::spinOnce();
+    if (!ros::ok())
       return false;
   }
-  VICON_ASSERT(vicon_client_.IsConnected().Connected, "Vicon connection failed!");
+  VICON_ASSERT(vicon_client_.IsConnected().Connected);
   VICON_INFO_STREAM("... connected!");
 
   // ClientPullPrefetch doesn't make much sense here, since we're only forwarding the data
@@ -234,7 +245,7 @@ bool ViconReceiver::init_vicon(std::string host_name, std::string stream_mode)
   else
   {
     VICON_ERROR("Unknown stream mode -- options are ServerPush, ClientPull");
-    ROS_SHUTDOWN();
+    ros::shutdown();
   }
 
   VICON_INFO_STREAM("Setting Stream Mode to " << stream_mode<< ": "<< Adapt(result));
@@ -246,7 +257,7 @@ bool ViconReceiver::init_vicon(std::string host_name, std::string stream_mode)
       << Adapt(_Output_GetAxisMapping.YAxis) << " Z-" << Adapt(_Output_GetAxisMapping.ZAxis));
 
   vicon_client_.EnableSegmentData();
-  VICON_ASSERT(vicon_client_.IsSegmentDataEnabled().Enabled, "SegmentData not enabled");
+  VICON_ASSERT(vicon_client_.IsSegmentDataEnabled().Enabled);
 
   Output_GetVersion _Output_GetVersion = vicon_client_.GetVersion();
   VICON_INFO_STREAM("Version: " << _Output_GetVersion.Major << "." << _Output_GetVersion.Minor << "."
@@ -267,18 +278,16 @@ void ViconReceiver::process_frame()
     return;
   }
 
-  ROS_DURATION  vicon_latency(vicon_client_.GetLatencyTotal().Total);
+  ros::Duration vicon_latency(vicon_client_.GetLatencyTotal().Total);
   if(publish_segments_)
   {
-    ROS_TIME time = GET_ROS_CLOCK();
-    process_subjects( time - vicon_latency);
+    process_subjects(ros::Time::now() - vicon_latency);
   }
 
   // TODO: function below is not yet checked
   if(publish_markers_)
   {
-    ROS_TIME time = GET_ROS_CLOCK();
-    process_markers( time - vicon_latency, lastFrameNumber_);
+    process_markers(ros::Time::now() - vicon_latency, lastFrameNumber_);
   }
 
   frameCount_ += frameDiff;
@@ -292,7 +301,7 @@ void ViconReceiver::process_frame()
 }
 
 
-void ViconReceiver::process_subjects(const ROS_TIME& frame_time)
+void ViconReceiver::process_subjects(const ros::Time& frame_time)
 {
   std::vector<tf::StampedTransform, std::allocator<tf::StampedTransform> > transforms;
   static unsigned int cnt = 0;
@@ -348,13 +357,13 @@ void ViconReceiver::process_subjects(const ROS_TIME& frame_time)
 
           if (msg_type_all_ == "geometry_msgs/PoseStamped")
           {
-            segment_publishers_.insert(std::make_pair(name, new SegmentPublisherPoseStamped(nh_, frame_id_all_, name, frequency_divider_all_, z_axis_offset)));
+            segment_publishers_.insert(std::make_pair(name, new SegmentPublisherPoseStamped(nh, frame_id_all_, name, frequency_divider_all_, z_axis_offset)));
           } else if (msg_type_all_ == "geometry_msgs/PoseWithCovarianceStamped")
           {
-            segment_publishers_.insert(std::make_pair(name, new SegmentPublisherPosewithcovarianceStamped(nh_, frame_id_all_, name, frequency_divider_all_, z_axis_offset)));
+            segment_publishers_.insert(std::make_pair(name, new SegmentPublisherPosewithcovarianceStamped(nh, frame_id_all_, name, frequency_divider_all_, z_axis_offset)));
           } else if (msg_type_all_ == "geometry_msgs/TransformStamped")
           {
-            segment_publishers_.insert(std::make_pair(name, new SegmentPublisherTransformStamped(nh_, frame_id_all_, name, frequency_divider_all_, z_axis_offset)));
+            segment_publishers_.insert(std::make_pair(name, new SegmentPublisherTransformStamped(nh, frame_id_all_, name, frequency_divider_all_, z_axis_offset)));
           }
 
         } else if (!(object_specific_details_it == object_specific_details_.end()))
@@ -447,20 +456,20 @@ void ViconReceiver::process_subjects(const ROS_TIME& frame_time)
   cnt++;
 }
 
-void ViconReceiver::process_markers(const ROS_TIME& frame_time, unsigned int vicon_frame_num)
+void ViconReceiver::process_markers(const ros::Time& frame_time, unsigned int vicon_frame_num)
 {
   if (marker_pub_.getNumSubscribers() > 0)
   {
     if (!marker_data_enabled)
     {
       vicon_client_.EnableMarkerData();
-      VICON_ASSERT(vicon_client_.IsMarkerDataEnabled().Enabled, "MarkerData not enabled");
+      VICON_ASSERT(vicon_client_.IsMarkerDataEnabled().Enabled);
       marker_data_enabled = true;
     }
     if (!unlabeled_marker_data_enabled)
     {
       vicon_client_.EnableUnlabeledMarkerData();
-      VICON_ASSERT(vicon_client_.IsUnlabeledMarkerDataEnabled().Enabled, "UnlabeledMarkerData not enabled");
+      VICON_ASSERT(vicon_client_.IsUnlabeledMarkerDataEnabled().Enabled);
       unlabeled_marker_data_enabled = true;
     }
     n_markers_ = 0;
@@ -527,7 +536,130 @@ void ViconReceiver::process_markers(const ROS_TIME& frame_time, unsigned int vic
   }
 }
 
+// bool ViconReceiver::grabPoseCallback(vicon_bridge::viconGrabPose::Request& req, vicon_bridge::viconGrabPose::Response& resp)
+// {
+//   VICON_INFO("Got request for a VICON pose");
+//   tf::TransformListener tf_listener;
+//   tf::StampedTransform transform;
+//   tf::Quaternion orientation(0, 0, 0, 0);
+//   tf::Vector3 position(0, 0, 0);
 
+//   std::string tracked_segment = tracked_frame_suffix_ + "/" + req.subject_name + "/" + req.segment_name;
+
+//   // Gather data:
+//   int N = req.n_measurements;
+//   int n_success = 0;
+//   ros::Duration timeout(0.1);
+//   ros::Duration poll_period(1.0 / 240.0);
+
+//   for (int k = 0; k < N; k++)
+//   {
+//     try
+//     {
+//       if (tf_listener.waitForTransform(frame_id_all_, tracked_segment, ros::Time::now(), timeout, poll_period))
+//       {
+//         tf_listener.lookupTransform(frame_id_all_, tracked_segment, ros::Time(0), transform);
+//         orientation += transform.getRotation();
+//         position += transform.getOrigin();
+//         n_success++;
+//       }
+//     }
+//     catch (tf::TransformException ex)
+//     {
+//       VICON_ERROR("%s", ex.what());
+//       //    		resp.success = false;
+//       //    		return false; // TODO: should we really bail here, or just try again?
+//     }
+//   }
+
+//   // Average the data
+//   orientation /= n_success;
+//   orientation.normalize();
+//   position /= n_success;
+
+//   // copy what we used to service call response:
+//   resp.success = true;
+//   resp.pose.header.stamp = ros::Time::now();
+//   resp.pose.header.frame_id = frame_id_all_;
+//   resp.pose.pose.position.x = position.x();
+//   resp.pose.pose.position.y = position.y();
+//   resp.pose.pose.position.z = position.z();
+//   resp.pose.pose.orientation.w = orientation.w();
+//   resp.pose.pose.orientation.x = orientation.x();
+//   resp.pose.pose.orientation.y = orientation.y();
+//   resp.pose.pose.orientation.z = orientation.z();
+
+//   return true;
+// }
+
+// bool ViconReceiver::calibrateSegmentCallback(vicon_bridge::viconCalibrateSegment::Request& req,
+//                               vicon_bridge::viconCalibrateSegment::Response& resp)
+// {
+
+//   std::string full_name = req.subject_name + "/" + req.segment_name;
+//   VICON_INFO("trying to calibrate %s", full_name.c_str());
+
+//   SegmentMap::iterator seg_it = segment_publishers_.find(full_name);
+
+//   if (seg_it == segment_publishers_.end())
+//   {
+//     VICON_WARN("frame %s not found --> not calibrating", full_name.c_str());
+//     resp.success = false;
+//     resp.status = "segment " + full_name + " not found";
+//     return false;
+//   }
+
+//   SegmentPublisher & seg = seg_it->second;
+
+//   if (seg.calibrated)
+//   {
+//     VICON_INFO("%s already calibrated, deleting old calibration", full_name.c_str());
+//     seg.calibration_pose.setIdentity();
+//   }
+
+//   vicon_bridge::viconGrabPose::Request grab_req;
+//   vicon_bridge::viconGrabPose::Response grab_resp;
+
+//   grab_req.n_measurements = req.n_measurements;
+//   grab_req.subject_name = req.subject_name;
+//   grab_req.segment_name = req.segment_name;
+
+//   bool ret = grabPoseCallback(grab_req, grab_resp);
+
+//   if (!ret)
+//   {
+//     resp.success = false;
+//     resp.status = "error while grabbing pose from Vicon";
+//     return false;
+//   }
+
+//   tf::Transform t;
+//   t.setOrigin(tf::Vector3(grab_resp.pose.pose.position.x, grab_resp.pose.pose.position.y,
+//                           grab_resp.pose.pose.position.z - req.z_offset));
+//   t.setRotation(tf::Quaternion(grab_resp.pose.pose.orientation.x, grab_resp.pose.pose.orientation.y,
+//                                 grab_resp.pose.pose.orientation.z, grab_resp.pose.pose.orientation.w));
+
+//   seg.calibration_pose = t.inverse();
+
+//   // write zero_pose to parameter server
+//   string param_suffix(full_name + "/zero_pose/");
+//   nh_priv.setParam(param_suffix + "orientation/w", t.getRotation().w());
+//   nh_priv.setParam(param_suffix + "orientation/x", t.getRotation().x());
+//   nh_priv.setParam(param_suffix + "orientation/y", t.getRotation().y());
+//   nh_priv.setParam(param_suffix + "orientation/z", t.getRotation().z());
+
+//   nh_priv.setParam(param_suffix + "position/x", t.getOrigin().x());
+//   nh_priv.setParam(param_suffix + "position/y", t.getOrigin().y());
+//   nh_priv.setParam(param_suffix + "position/z", t.getOrigin().z());
+
+//   VICON_INFO_STREAM("calibration completed");
+//   resp.pose = grab_resp.pose;
+//   resp.success = true;
+//   resp.status = "calibration successful";
+//   seg.calibrated = true;
+
+//   return true;
+// }
 
 int main(int argc, char** argv)
 {

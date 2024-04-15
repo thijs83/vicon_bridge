@@ -1,20 +1,20 @@
-#ifndef VICON_BRIDGE_VICON_BRIDGE_H
-#define VICON_BRIDGE_VICON_BRIDGE_H
+
 
 #include <string>
 #include <vector>
 #include <array>
-
+#include <ros/ros.h>
 
 #include <tf/transform_broadcaster.h>
 
 #include <vicon_bridge/segment_publisher.h>
 
+//Services
+#include <vicon_bridge/viconGrabPose.h>
+#include <vicon_bridge/viconCalibrateSegment.h>
+
 // Vicon SDK
 #include <ViconDataStreamSDK_CPP/DataStreamClient.h>
-
-#include <vicon_bridge/ros_definitions.h>
-#include <vicon_bridge/node_handler_ros.h>
 
 using namespace ViconDataStreamSDK::CPP;
 
@@ -88,9 +88,12 @@ std::string Adapt(const Result::Enum i_result)
   }
 }
 
-class ViconReceiver : public NodeHandler
+class ViconReceiver
 {
 private:
+  ros::NodeHandle nh;
+  ros::NodeHandle nh_priv;
+
   // Parameters:
   std::string tracked_frame_suffix_;
   std::string frame_id_all_ = "map";
@@ -102,13 +105,22 @@ private:
   ros::Publisher marker_pub_;
   // TF Broadcaster
   tf::TransformBroadcaster tf_broadcaster_;
+  //geometry_msgs::PoseStamped vicon_pose;
+  tf::Transform flyer_transform;
+
+  // TODO: Make the following configurable:
+  ros::ServiceServer m_grab_vicon_pose_service_server;
+  ros::ServiceServer calibrate_segment_server_;
 
 
   unsigned int lastFrameNumber_ = 0;
   unsigned int frameCount_ = 0;
   unsigned int droppedFrameCount_ = 0;
+  ros::Time time_datum;
+  unsigned int frame_datum = 0;
   unsigned int n_markers_ = 0;
   unsigned int n_unlabeled_markers_ = 0;
+  bool segment_data_enabled;
   bool marker_data_enabled = false;
   bool unlabeled_marker_data_enabled = false;
 
@@ -137,9 +149,12 @@ private:
 
   void process_frame();
 
-  void process_subjects(const ROS_TIME& frame_time);
+  void process_subjects(const ros::Time& frame_time);
 
-  void process_markers(const ROS_TIME& frame_time, unsigned int vicon_frame_num);
+  void process_markers(const ros::Time& frame_time, unsigned int vicon_frame_num);
+
+  bool grabPoseCallback(vicon_bridge::viconGrabPose::Request& req, vicon_bridge::viconGrabPose::Response& resp);
+
+  bool calibrateSegmentCallback(vicon_bridge::viconCalibrateSegment::Request& req,
+                                vicon_bridge::viconCalibrateSegment::Response& resp);
 };
-
-#endif // VICON_BRIDGE_VICON_BRIDGE_H
