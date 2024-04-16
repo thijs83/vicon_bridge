@@ -39,20 +39,26 @@ ament_export_include_directories(include)
 ament_export_libraries(vicon_sdk_lib)
 
 file(GLOB_RECURSE LIBRARY_HEADERS "include/*.h")
-add_executable(vicon_bridge_ros src/vicon_bridge.cpp)
-ament_target_dependencies(vicon_bridge_ros
+add_executable(vicon_bridge_node src/vicon_bridge.cpp)
+ament_target_dependencies(vicon_bridge_node
   rclcpp
   geometry_msgs
   tf2
   tf2_ros
   )
-target_link_libraries(vicon_bridge_ros vicon_sdk_lib ${Boost_LIBRARIES})
-rosidl_target_interfaces(vicon_bridge_ros
+target_link_libraries(vicon_bridge_node vicon_sdk_lib ${Boost_LIBRARIES})
+rosidl_target_interfaces(vicon_bridge_node
   ${PROJECT_NAME} "rosidl_typesupport_cpp")
-#target_include_directories(vicon_bridge PUBLIC include vicon_sdk/DataStream vicon_sdk)
+
 
 install(TARGETS
-  vicon_bridge_ros
+  vicon_bridge_node
   DESTINATION lib/${PROJECT_NAME})
+
+# Install launch files.
+install(DIRECTORY
+  launch
+  DESTINATION share/${PROJECT_NAME}/
+)
 
 ament_package()

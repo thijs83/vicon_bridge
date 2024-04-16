@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.3)
 project(vicon_bridge)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 
 # Enable compile optimizations
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wno-dev -Wno-deprecated-declarations")

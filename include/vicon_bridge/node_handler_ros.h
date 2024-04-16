@@ -28,7 +28,7 @@ public:
     template <typename T>
     void getParameter(std::string parameter_name, T &param)
     {
-        nh_.param(parameter_name, param, param);
+        nh_priv_.param(parameter_name, param, param);
     }
 
     template <typename MSG>
@@ -36,6 +36,7 @@ public:
     {
         return nh_.advertise<MSG>(topic, queue_size);
     }
+
 
     void createMarkerPublisher(std::string topic, int queue_size)
     {
@@ -51,7 +52,6 @@ public:
 protected:
     ros::NodeHandle nh_;
     ros::NodeHandle nh_priv_;
-    ros::Publisher pub_marker_;
     std::shared_ptr<ros::Publisher> pub_marker_;
     tf2_ros::TransformBroadcaster tf_broadcaster_;
 };
@@ -77,24 +77,14 @@ public:
     NodeHandler(std::string node_name) : Node(node_name), tf_broadcaster_(this)
     {}
 
-
+ 
     // Get parameter from the parameter server from private namespace
     template <typename T>
     void getParameter(std::string parameter_name, T &param)
     {
-        rclcpp::Parameter parameter;
-        this->get_parameter("~/"+parameter_name, parameter);
-        param = getCorrectType<T>(parameter);
+        this->declare_parameter(parameter_name, param);
+        this->get_parameter(parameter_name, param);
     }
-
-    template <typename T>
-    T getCorrectType(rclcpp::Parameter parameter)
-    {
-        return parameter.get_value<T>();
-    }
-
-    
-
 
     template <typename MSG>
     typename rclcpp::Publisher<MSG>::SharedPtr createPublisher(std::string topic, int queue_size)
@@ -116,52 +106,6 @@ protected:
     rclcpp::Publisher<vicon_bridge::msg::Markers>::SharedPtr pub_marker_;
     tf2_ros::TransformBroadcaster tf_broadcaster_;
 };
-
-
-template <>
-double NodeHandler::getCorrectType<double>(rclcpp::Parameter parameter)
-{
-    return parameter.as_double();
-}
-
-template <>
-int NodeHandler::getCorrectType<int>(rclcpp::Parameter parameter)
-{
-    return parameter.as_int();
-}
-
-template <>
-std::string NodeHandler::getCorrectType<std::string>(rclcpp::Parameter parameter)
-{
-    return parameter.as_string();
-}
-
-template <>
-bool NodeHandler::getCorrectType<bool>(rclcpp::Parameter parameter)
-{
-    return parameter.as_bool();
-}
-
-template <>
-std::vector<std::string> NodeHandler::getCorrectType<std::vector<std::string>>(rclcpp::Parameter parameter)
-{
-    return parameter.as_string_array();
-}
-
-template <>
-std::vector<int> NodeHandler::getCorrectType<std::vector<int>>(rclcpp::Parameter parameter)
-{
-    auto temp = parameter.as_integer_array();
-    std::vector<int> result(temp.begin(), temp.end());
-    return result;
-}
-
-template <>
-std::vector<double> NodeHandler::getCorrectType<std::vector<double>>(rclcpp::Parameter parameter)
-{
-    return parameter.as_double_array();
-}
-
 
 
 #endif // ROS_VERSION2

@@ -48,18 +48,16 @@
 
 #include <vicon_bridge/ros_definitions.h>
 
-
 ViconReceiver::ViconReceiver() :
-    NodeHandler("vicon")
+    NodeHandler("vicon_bridge_node")
 {
   // Setting up the vicon client connection
   std::string host_name = "";
   std::string stream_mode = "ClientPull";
   bool setup_grabpose = false;
 
-
-  getParameter("stream_mode", stream_mode);
-  getParameter("datastream_hostport", host_name);
+  this->getParameter("stream_mode", stream_mode);
+  this->getParameter("datastream_hostport", host_name);
 
   if (init_vicon(host_name, stream_mode) == false)
   {
@@ -67,16 +65,16 @@ ViconReceiver::ViconReceiver() :
     return;
   }
 
-  getParameter("publish_transform", publish_tf_);
-  getParameter("publish_markers", publish_markers_);
-  getParameter("publish_segments", publish_segments_);
-  getParameter("setup_grabpose", setup_grabpose);
+  this->getParameter("publish_transform", publish_tf_);
+  this->getParameter("publish_markers", publish_markers_);
+  this->getParameter("publish_segments", publish_segments_);
+  this->getParameter("setup_grabpose", setup_grabpose);
 
-  // Parameters for the tracked objects
-  getParameter("msg_type", msg_type_all_);
-  getParameter("frame_id", frame_id_all_);
-  getParameter("frequency_divider", frequency_divider_all_);
-  getParameter("reset_z_axis", reset_z_axis_);
+  // // Parameters for the tracked objects
+  this->getParameter("msg_type", msg_type_all_);
+  this->getParameter("frame_id", frame_id_all_);
+  this->getParameter("frequency_divider", frequency_divider_all_);
+  this->getParameter("reset_z_axis", reset_z_axis_);
 
   vicon_client_.GetFrame();
   double client_framerate = vicon_client_.GetFrameRate().FrameRateHz;
@@ -91,19 +89,19 @@ ViconReceiver::ViconReceiver() :
   }
 
   // Parameters for tracking specific objects
-  getParameter("only_use_object_specific", object_specific_only_);
+  this->getParameter("only_use_object_specific", object_specific_only_);
 
   std::vector<std::string> object_names;
   std::vector<std::string> object_msg_types;
   std::vector<std::string> object_frame_ids;
   std::vector<std::string> object_publish_topics;
-  std::vector<int> object_frequency_divider;
-  getParameter("object_specific/object_names", object_names);
-  getParameter("object_specific/object_msg_types", object_msg_types);
-  getParameter("object_specific/object_frame_ids", object_frame_ids);
-  getParameter("object_specific/object_publish_topics", object_publish_topics);
-  getParameter("object_specific/object_publish_topics", object_publish_topics);
-  getParameter("object_specific/object_frequency_divider", object_frequency_divider);
+  std::vector<double> object_frequency_divider;
+  this->getParameter("object_specific/object_names", object_names);
+  this->getParameter("object_specific/object_msg_types", object_msg_types);
+  this->getParameter("object_specific/object_frame_ids", object_frame_ids);
+  this->getParameter("object_specific/object_publish_topics", object_publish_topics);
+  this->getParameter("object_specific/object_publish_topics", object_publish_topics);
+  this->getParameter("object_specific/object_frequency_divider", object_frequency_divider);
 
 
   // Check if the sizes of the vectors are equal
@@ -131,13 +129,14 @@ ViconReceiver::ViconReceiver() :
       object_specific_details_.insert(std::pair<std::string ,std::array<std::string, 4>>(object_names[i], object_details));
 
       int frequency = client_framerate / object_frequency_divider[i];
+      int object_frequency_int = object_frequency_divider[i];
 
       VICON_INFO("Object %s: \n"
                 "\t\t\t\t\t msg type: %s \n"
                 "\t\t\t\t\t frame id: %s \n"
                 "\t\t\t\t\t topic name: %s \n"
                 "\t\t\t\t\t frequency divider: %i \n"
-                "\t\t\t\t\t actual frequency: %i", object_names[i].c_str(), object_msg_types[i].c_str(), object_frame_ids[i].c_str(), object_publish_topics[i].c_str(), object_frequency_divider[i], frequency);
+                "\t\t\t\t\t actual frequency: %i", object_names[i].c_str(), object_msg_types[i].c_str(), object_frame_ids[i].c_str(), object_publish_topics[i].c_str(), object_frequency_int, frequency);
     }
   }
 
@@ -165,7 +164,7 @@ ViconReceiver::ViconReceiver() :
       while (!vicon_client_.IsConnected().Connected)
       {
         vicon_client_.Connect(host_name);
-        VICON_INFO(".");
+        VICON_INFO_STREAM(".");
         loop_rate.sleep();
       }
       VICON_INFO_STREAM("... connection re-established!");

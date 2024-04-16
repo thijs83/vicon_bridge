@@ -41,20 +41,20 @@ file(GLOB_RECURSE vicon_sdk_files "${CMAKE_CURRENT_SOURCE_DIR}/vicon_sdk/**/**.c
 add_library(vicon_sdk ${vicon_sdk_files})
 target_link_libraries(vicon_sdk PUBLIC ${Boost_LIBRARIES})
 
-add_executable(vicon_bridge
+add_executable(vicon_bridge_node
     src/vicon_bridge.cpp
 )
-target_link_libraries(vicon_bridge
+target_link_libraries(vicon_bridge_node
     vicon_sdk
     ${catkin_LIBRARIES}
 )
-add_dependencies(vicon_bridge ${PROJECT_NAME}_gencpp)
+add_dependencies(vicon_bridge_node ${PROJECT_NAME}_gencpp)
 
 add_executable(testclient src/ViconDataStreamSDK_CPPTest.cpp)
 target_link_libraries(testclient vicon_sdk)
 
 # Install
-install(TARGETS vicon_sdk vicon_bridge testclient
+install(TARGETS vicon_sdk vicon_bridge_node testclient
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
