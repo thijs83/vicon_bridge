@@ -6,8 +6,6 @@
 #include <array>
 
 
-#include <tf/transform_broadcaster.h>
-
 #include <vicon_bridge/segment_publisher.h>
 
 // Vicon SDK
@@ -96,12 +94,6 @@ private:
   std::string frame_id_all_ = "map";
   std::string msg_type_all_ = "geometry_msgs/PoseStamped";
   int frequency_divider_all_ = 1;
-
-
-  // Publisher
-  ros::Publisher marker_pub_;
-  // TF Broadcaster
-  tf::TransformBroadcaster tf_broadcaster_;
 
 
   unsigned int lastFrameNumber_ = 0;

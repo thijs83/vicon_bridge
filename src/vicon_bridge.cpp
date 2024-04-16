@@ -40,15 +40,6 @@
 #include <map>
 #include <unordered_map>
 
-
-#include <tf/tf.h>
-//#include <tf/transform_broadcaster.h>
-//#include <tf/transform_listener.h>
-//#include <geometry_msgs/TransformStamped.h>
-
-#include <vicon_bridge/Markers.h>
-#include <vicon_bridge/Marker.h>
-
 #include <vicon_bridge/segment_publisher_posestamped.h>
 #include <vicon_bridge/segment_publisher_posewithcovariancestamped.h>
 #include <vicon_bridge/segment_publisher_transformstamped.h>
@@ -294,7 +285,7 @@ void ViconReceiver::process_frame()
 
 void ViconReceiver::process_subjects(const ROS_TIME& frame_time)
 {
-  std::vector<tf::StampedTransform, std::allocator<tf::StampedTransform> > transforms;
+  std::vector<GEOMETRY_MSG_TRANSFORMSTAMPED> transforms;
   static unsigned int cnt = 0;
 
   unsigned int n_subjects = vicon_client_.GetSubjectCount().SubjectCount;
@@ -423,12 +414,20 @@ void ViconReceiver::process_subjects(const ROS_TIME& frame_time)
 
       if (publish_tf_)
       {
-        tf::Transform transform;
-        transform.setOrigin(tf::Vector3(trans.Translation[0] / 1000, trans.Translation[1] / 1000,
-                                              trans.Translation[2] / 1000));
-        transform.setRotation(tf::Quaternion(quat.Rotation[0], quat.Rotation[1], quat.Rotation[2],
-                                                        quat.Rotation[3]));
-        transforms.push_back(tf::StampedTransform(transform, frame_time, frame_id_all_, name));
+        GEOMETRY_MSG_TRANSFORMSTAMPED transform;
+        transform.header.stamp = frame_time;
+        transform.header.frame_id = frame_id_all_;
+        transform.child_frame_id = name;
+
+        transform.transform.translation.x = trans.Translation[0] / 1000;
+        transform.transform.translation.y = trans.Translation[1] / 1000;
+        transform.transform.translation.z = trans.Translation[2] / 1000;
+        transform.transform.rotation.x = quat.Rotation[0];
+        transform.transform.rotation.y = quat.Rotation[1];
+        transform.transform.rotation.z = quat.Rotation[2];
+        transform.transform.rotation.w = quat.Rotation[3];
+
+        transforms.push_back(transform);
       }
 
       double translation[3] = {trans.Translation[0] / 1000, trans.Translation[1] / 1000,
@@ -442,14 +441,14 @@ void ViconReceiver::process_subjects(const ROS_TIME& frame_time)
 
   if(publish_tf_)
   {
-    tf_broadcaster_.sendTransform(transforms);
+    this->tf_broadcaster_.sendTransform(transforms);
   }
   cnt++;
 }
 
 void ViconReceiver::process_markers(const ROS_TIME& frame_time, unsigned int vicon_frame_num)
 {
-  if (marker_pub_.getNumSubscribers() > 0)
+  if (this->subscribersCount() > 0)
   {
     if (!marker_data_enabled)
     {
@@ -464,7 +463,7 @@ void ViconReceiver::process_markers(const ROS_TIME& frame_time, unsigned int vic
       unlabeled_marker_data_enabled = true;
     }
     n_markers_ = 0;
-    vicon_bridge::Markers markers_msg;
+    VICON_BRIDGE_MARKERS markers_msg;
     markers_msg.header.stamp = frame_time;
     markers_msg.frame_number = vicon_frame_num;
     // Count the number of subjects
@@ -479,7 +478,7 @@ void ViconReceiver::process_markers(const ROS_TIME& frame_time, unsigned int vic
       //std::cout << "    Markers (" << MarkerCount << "):" << std::endl;
       for (unsigned int MarkerIndex = 0; MarkerIndex < num_subject_markers; ++MarkerIndex)
       {
-        vicon_bridge::Marker this_marker;
+        VICON_BRIDGE_MARKER this_marker;
         this_marker.marker_name = vicon_client_.GetMarkerName(this_subject_name, MarkerIndex).MarkerName;
         this_marker.subject_name = this_subject_name;
         this_marker.segment_name
@@ -510,7 +509,7 @@ void ViconReceiver::process_markers(const ROS_TIME& frame_time, unsigned int vic
 
       if (_Output_GetUnlabeledMarkerGlobalTranslation.Result == Result::Success)
       {
-        vicon_bridge::Marker this_marker;
+        VICON_BRIDGE_MARKER this_marker;
         this_marker.translation.x = _Output_GetUnlabeledMarkerGlobalTranslation.Translation[0];
         this_marker.translation.y = _Output_GetUnlabeledMarkerGlobalTranslation.Translation[1];
         this_marker.translation.z = _Output_GetUnlabeledMarkerGlobalTranslation.Translation[2];
@@ -523,7 +522,7 @@ void ViconReceiver::process_markers(const ROS_TIME& frame_time, unsigned int vic
             Adapt(_Output_GetUnlabeledMarkerGlobalTranslation.Result).c_str());
       }
     }
-    marker_pub_.publish(markers_msg);
+    this->pub_marker_->publish(markers_msg);
   }
 }
 
@@ -531,16 +530,21 @@ void ViconReceiver::process_markers(const ROS_TIME& frame_time, unsigned int vic
 
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "vicon");
 
+#ifdef ROS_VERSION1
+  ros::init(argc, argv, "vicon");
   ros::AsyncSpinner aspin(1);
   aspin.start();
   ViconReceiver vr;
   aspin.stop();
+#endif
+
+#ifdef ROS_VERSION2
+  rclcpp::init(argc, argv);
+  auto node = std::make_shared<ViconReceiver>();
+  rclcpp::spin(node);
+  rclcpp::shutdown();
+#endif
+
   return 0;
 }
-
-    // rclcpp::init(argc, argv);
-    // auto node = std::make_shared<rclcpp::Node>("my_node_name");
-    // rclcpp::spin(node);
-    // rclcpp::shutdown();

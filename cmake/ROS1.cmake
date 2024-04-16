@@ -1,8 +1,12 @@
+
+find_package(Boost REQUIRED COMPONENTS system thread)
+
 find_package(catkin REQUIRED COMPONENTS
     message_generation
     geometry_msgs
     roscpp
-    tf
+    tf2
+    tf2_ros
     diagnostic_updater
 )
 

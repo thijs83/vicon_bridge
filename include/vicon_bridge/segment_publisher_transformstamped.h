@@ -8,7 +8,7 @@
   typedef geometry_msgs::TransformStamped GEOMETRY_MSG_TRANSFORMSTAMPED;
 #endif
 #ifdef ROS_VERSION2
-  #include <geometry_msgs/msg/transform_stamped.hpp>
+  #include "geometry_msgs/msg/transform_stamped.hpp"
   typedef geometry_msgs::msg::TransformStamped GEOMETRY_MSG_TRANSFORMSTAMPED;
 #endif
 

@@ -45,7 +45,7 @@ public:
  */
 #ifdef ROS_VERSION2
 
-#include <rclcpp/rclcpp.hpp>
+#include "rclcpp/rclcpp.hpp"
 
 #define GET_ROS_CLOCK() this->get_clock()->now();
 typedef rclcpp::Time ROS_TIME;
@@ -58,10 +58,12 @@ typedef rclcpp::Duration ROS_DURATION;
 template <typename MSG>
 class RosPublisher
 {
-    rclcpp::Publisher<MSG>::SharedPtr publisher;
+    using PublisherPtr = typename rclcpp::Publisher<MSG>::SharedPtr;
+
+    PublisherPtr publisher;
 
 public:
-    RosPublisher(const rclcpp::Publisher<MSG>::SharedPtr publisher):
+    RosPublisher(const PublisherPtr publisher):
         publisher(publisher)
     {};
 

@@ -8,9 +8,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -Wno-dev -Wno-deprecated-declaration
 # For debugging use below
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g3 -Wall")
 
-find_package(Boost REQUIRED COMPONENTS thread date_time)
-
-find_package(catkin QUIET COMPONENTS roscpp)
+find_package(catkin QUIET)
 find_package(ament_cmake QUIET)
 if (catkin_FOUND)
     message(STATUS "\n ${PROJECT_NAME} => ROS1 found, building pkg for ROS1 \n")

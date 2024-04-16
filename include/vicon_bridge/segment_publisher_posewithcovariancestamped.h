@@ -8,7 +8,7 @@
   typedef geometry_msgs::PoseWithCovarianceStamped GEOMETRY_MSG_POSEWITHCOVARIANCESTAMPED;
 #endif
 #ifdef ROS_VERSION2
-  #include <geometry_msgs/msg/PoseWithCovarianceStamped.hpp>
+  #include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
   typedef geometry_msgs::msg::PoseWithCovarianceStamped GEOMETRY_MSG_POSEWITHCOVARIANCESTAMPED;
 #endif
 

@@ -8,7 +8,7 @@
   typedef geometry_msgs::PoseStamped GEOMETRY_MSG_POSESTAMPED;
 #endif
 #ifdef ROS_VERSION2
-  #include <geometry_msgs/msg/PoseStamped.hpp>
+  #include "geometry_msgs/msg/pose_stamped.hpp"
   typedef geometry_msgs::msg::PoseStamped GEOMETRY_MSG_POSESTAMPED;
 #endif
 

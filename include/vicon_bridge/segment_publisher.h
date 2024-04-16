@@ -3,7 +3,6 @@
 
 #include <string>
 
-#include <vicon_bridge/node_handler_ros.h>
 #include <vicon_bridge/ros_definitions.h>
 
 class SegmentPublisher
@@ -39,8 +38,6 @@ public:
     counter = 0;
     return false;
   }
-
-  //virtual void setMsg(ros::NodeHandle nh, std::string publish_topic)=0;
 
   virtual void publishMsg(const ROS_TIME frame_time, const double position[3], const double rotation[4])=0;
 
