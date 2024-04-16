@@ -22,7 +22,6 @@ def generate_launch_description():
             package='vicon_bridge',
             executable='vicon_bridge_node',
             output='screen',
-            emulate_tty=True,
             parameters=[
                 {'stream_mode': 'ServerPush'},
                 {'datastream_hostport': LaunchConfiguration('datastream_hostport')},
